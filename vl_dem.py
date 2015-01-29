@@ -47,7 +47,11 @@ def initialize_filling_liggghts(geometry, lmp):
     lmp.command('variable energy equal ke')
     lmp.command('variable volume equal vol')
 
-def initialize_restart_liggghts(filename, Rp, lmp):
+def initialize_restart_liggghts(filename, geometry, lmp):
+    xlim = geometry[0]
+    ylim = geometry[1]
+    zlim = geometry[2]
+    Rp   = geometry[3]
     lmp.command('neighbor '+str(2*Rp)+' bin')
     lmp.command('neigh_modify delay 0')
     lmp.command('pair_style gran model hertz tangential history')
