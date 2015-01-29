@@ -56,7 +56,7 @@ def initialize_restart_liggghts(filename, Rp, lmp):
     lmp.command('newton off')
     lmp.command('communicate single vel yes')
     lmp.command('fix gravi all gravity 9.81 vector 0.0 0.0 -1.0')
-    lmp.command('fix integr all nve/sphere')
+    
 
 
 def define_timestep(dt, lmp):
@@ -72,13 +72,16 @@ def create_horizontal_walls(xlim, lmp):
                 + str(-xlim))
     lmp.command('fix xFill2 all wall/gran model hertz '\
                 'tangential history primitive type 1 xplane ' \
-                + str(xlim
+                + str(xlim))
+def destroy_horizontal_walls(lmp):
+    lmp.command('unfix xFill1')
+    lmp.command('unfix xFill2')
 
 def create_horizontal_walls_hot(xlim, T, lmp):
-    lmp.command('fix xFill1 all wall/gran model hertz '\
+    lmp.command('fix x_hot_1 all wall/gran model hertz '\
                 'tangential history primitive type 1 xplane ' \
                 + str(-xlim)+' temperature '+str(T))
-    lmp.command('fix xFill2 all wall/gran model hertz '\
+    lmp.command('fix x_hot_2 all wall/gran model hertz '\
                 'tangential history primitive type 1 xplane ' \
                 + str(xlim)+' temperature '+str(T))
 
@@ -153,22 +156,12 @@ def set_dumps(output_steps, output_directory, lmp):
             	'c_fc[5] c_fc[6] c_fc[7] c_fc[8] c_fc[9] c_fc[10] c_fc[11] '+\
             	'c_fc[12] c_fc[13] c_fc[14]')
 
-
-
-
-
-
-
 def run_to_kinetic_steady_state(check_steps, min_energy, lmp):
 	lmp.command('run '+str(check_steps))
 	ke = lmp.extract_variable('energy','null',0)
 	while ke > min_energy:
 		lmp.command('run '+str(check_steps))
 		ke = lmp.extract_variable('energy','null',0)
-
-
-
-
 
 def get_height(Rp):
     import glob, os, numpy
@@ -200,7 +193,8 @@ def get_pressure(geometry, lmp):
     force = lmp.extract_variable('top_force','null',0)
     return (force/(4*xlim*ylim))/10.**6
 
-
+def hold_still(Rp, lmp):
+    lmp.command('fix nve_limit_heating all nve/limit absolute '+str(Rp/10000000.))
 
 
 

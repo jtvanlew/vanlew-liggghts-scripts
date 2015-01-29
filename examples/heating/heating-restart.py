@@ -27,13 +27,13 @@ lmp = lammps()
 
 #-----------------------------------------------------------------------------------------------------------
 # USER INPUT
-restart_file = 'filled_*.liggghts'
+restart_file = 'filled_*.restart'
 # dt (s) and times for outputs or checks in simulation
-dt                  = 5.e-8     # s
-dump_time           = 0.01      # s
-CTE_check_time      = 0.001     # s
-heat_time           = 100.      # s
-screen_print_time   = 0.001     # s
+dt                  = 1.e-4     # s
+dump_time           = 1.e0      # s
+CTE_check_time      = 1.e-1     # s
+heat_time           = 1.e2      # s
+screen_print_time   = 1.e-2     # s
 
 
 
@@ -121,18 +121,19 @@ thermal_expansion(Rp, Ti, beta, CTE_check_steps, lmp)
 #-----------------------------------------------------------------------------------------------------------
 # Specify system geometries and create templates for the pebbles
 create_horizontal_walls(xlim, lmp)
-define_phi_pebbles(geometry, dump_steps, rho, phi, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------------------------
 # specify how frequently to dump and where to put the files. change screen display to normal custom version
 custom_screen_output(print_steps, lmp)
-set_dumps(print_steps, post_dir, lmp)
+set_dumps(dump_steps, post_dir, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------------------------
+destroy_horizontal_walls(lmp)
 nuke_all_pebbles(Qp, lmp)
-lmp.command('run '+str(heat_time))
+hold_still(Rp, lmp)
+lmp.command('run '+str(heat_steps))
 #-----------------------------------------------------------------------------------------------------------
 
 
