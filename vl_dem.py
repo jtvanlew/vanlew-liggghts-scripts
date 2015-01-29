@@ -51,6 +51,8 @@ def initialize_restart_liggghts(filename, Rp, lmp):
     lmp.command('neighbor '+str(2*Rp)+' bin')
     lmp.command('neigh_modify delay 0')
     lmp.command('pair_style gran model hertz tangential history')
+    lmp.command('region reg block '+str(-xlim)+' '+str(xlim)+' '+str(-ylim)+' '\
+        +str(ylim)+' 0 '+str(zlim)+' units box')
     lmp.command('read_restart '+filename)
     lmp.command('pair_coeff * *')
     lmp.command('newton off')
@@ -126,7 +128,8 @@ def custom_screen_output(print_steps, lmp):
     lmp.command('thermo_style custom step atoms ke f_htc3 vol')
     lmp.command('thermo '+str(print_steps))
 
-
+def set_all_temp(T, lmp):
+    lmp.command('set region reg property/atom Temp '+str(T))
 
 
 def thermal_expansion(r0, Ti, beta, grow_steps, lmp):
