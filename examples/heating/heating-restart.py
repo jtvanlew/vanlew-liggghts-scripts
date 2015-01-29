@@ -32,8 +32,8 @@ restart_file = 'filled_*.restart'
 dt                  = 1.e-4     # s
 dump_time           = 1.e0      # s
 CTE_check_time      = 1.e-1     # s
-heat_time           = 1.e2      # s
-screen_print_time   = 1.e-2     # s
+heat_time           = 1.e3      # s
+screen_print_time   = 1.e-1     # s
 
 
 
@@ -64,6 +64,7 @@ gamma = 0.1
 k     = 2.4         # W/m-K
 Cp    = 1.          # kJ/kg-K
 Ti    = 300         # K
+Twalls= 573
 beta  = 15.e-6
 Q     = 8.e6
 Qp    = Q * (4./3 * 3.1415 * Rp**3)
@@ -121,6 +122,8 @@ thermal_expansion(Rp, Ti, beta, CTE_check_steps, lmp)
 #-----------------------------------------------------------------------------------------------------------
 # Specify system geometries and create templates for the pebbles
 create_horizontal_walls(xlim, lmp)
+destroy_horizontal_walls(lmp)
+create_horizontal_walls_hot(xlim, Twalls, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------------------------
@@ -130,7 +133,7 @@ set_dumps(dump_steps, post_dir, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------------------------
-destroy_horizontal_walls(lmp)
+
 nuke_all_pebbles(Qp, lmp)
 hold_still(Rp, lmp)
 lmp.command('run '+str(heat_steps))
