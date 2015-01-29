@@ -162,7 +162,7 @@ define_phi_pebbles(geometry, dump_steps, rho, phi, lmp)
 #-----------------------------------------------------------------------------------------------------------
 # specify how frequently to dump and where to put the files. change screen display to normal custom version
 custom_screen_output(print_steps, lmp)
-set_dumps(print_steps, post_dir, lmp)
+set_dumps(dump_steps, post_dir, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
 
