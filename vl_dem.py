@@ -44,9 +44,19 @@ def initialize_filling_liggghts(geometry, lmp):
     lmp.command('pair_style gran model hertz tangential history')
     lmp.command('pair_coeff * *')
     lmp.command('fix gravi all gravity 9.81 vector 0.0 0.0 -1.0')
-    
     lmp.command('variable energy equal ke')
     lmp.command('variable volume equal vol')
+
+def initialize_restart_liggghts(filename, Rp, lmp):
+    lmp.command('neighbor '+str(2*Rp)+' bin')
+    lmp.command('neigh_modify delay 0')
+    lmp.command('pair_style gran model hertz tangential history')
+    lmp.command('read_restart '+filename)
+    lmp.command('pair_coeff * *')
+    lmp.command('newton off')
+    lmp.command('communicate single vel yes')
+    lmp.command('fix gravi all gravity 9.81 vector 0.0 0.0 -1.0')
+    lmp.command('fix integr all nve/sphere')
 
 
 def define_timestep(dt, lmp):
@@ -58,9 +68,19 @@ def create_floor(lmp):
 
 def create_horizontal_walls(xlim, lmp):
     lmp.command('fix xFill1 all wall/gran model hertz '\
-        'tangential history primitive type 1 xplane ' + str(-xlim))
+                'tangential history primitive type 1 xplane '\
+                + str(-xlim))
     lmp.command('fix xFill2 all wall/gran model hertz '\
-        'tangential history primitive type 1 xplane ' + str(xlim))
+                'tangential history primitive type 1 xplane ' \
+                + str(xlim
+
+def create_horizontal_walls_hot(xlim, T, lmp):
+    lmp.command('fix xFill1 all wall/gran model hertz '\
+                'tangential history primitive type 1 xplane ' \
+                + str(-xlim)+' temperature '+str(T))
+    lmp.command('fix xFill2 all wall/gran model hertz '\
+                'tangential history primitive type 1 xplane ' \
+                + str(xlim)+' temperature '+str(T))
 
 def create_vertical_walls(Z, lmp):
     lmp.command('fix xFill1 all wall/gran model hertz '\
@@ -70,29 +90,25 @@ def create_vertical_walls(Z, lmp):
 
 def define_gaussian_pebbles(rho, mu, sigma, N, lmp):
     lmp.command('fix pts1 all particletemplate/sphere 1 atom_type 1 density constant ' \
-                        + str(rho) + " radius gaussian number " + str(mu) + ' ' \
-                        + str(sigma))
+                + str(rho) + " radius gaussian number " + str(mu) + ' ' \
+                + str(sigma))
     lmp.command('fix pdd1 all particledistribution/discrete 4444 1 pts1 1.0')
     lmp.command('fix ins all insert/pack seed 4910 distributiontemplate pdd1 insert_every \
-        100 maxattempt 10000 overlapcheck yes all_in yes vel constant 0. 0. 0. region reg particles_in_region '+str(N))
+                100 maxattempt 10000 overlapcheck yes all_in yes vel constant 0. 0. 0. region reg particles_in_region '+str(N))
 
 def insert_N_pebbles(rho, Rp, N, lmp):
     lmp.command('fix pts1 all particletemplate/sphere 1 atom_type 1 density constant '+ str(rho) + " radius constant " + str(Rp))
     lmp.command('fix pdd1 all particledistribution/discrete 4444 1 pts1 1.0')
-    lmp.command('fix ins all insert/pack seed 4910 distributiontemplate pdd1 insert_every \
-        100 maxattempt 10000 overlapcheck no all_in yes vel constant 0. 0. 0. region reg particles_in_region '+str(N))
-    # natoms = lmp.get_natoms()
-    # while natoms < N:
-    #     lmp.command('run ' + str(fill_check_steps))
-    #     natoms = lmp.get_natoms()
-    # lmp.command('unfix ins')
+    lmp.command('fix ins all insert/pack seed 4910 distributiontemplate pdd1 insert_every 1\
+         maxattempt 1000 overlapcheck no all_in yes vel constant 0. 0. 0. region reg particles_in_region '+str(N))
+
 
 def define_phi_pebbles(geometry, dump_steps, rho, phi, lmp):
     Rp   = geometry[3]
     lmp.command('fix pts1 all particletemplate/sphere 1 atom_type 1 density constant '+ str(rho) + " radius constant " + str(Rp))
     lmp.command('fix pdd1 all particledistribution/discrete 4444 1 pts1 1.0')
-    lmp.command('fix ins all insert/pack seed 4910 distributiontemplate pdd1 insert_every \
-        '+str(dump_steps)+' maxattempt 1000000 overlapcheck no all_in no vel constant 0. 0. 0. region reg volumefraction_region '+str(phi))
+    lmp.command('fix ins all insert/pack seed 4910 distributiontemplate pdd1 insert_every 1\
+         maxattempt 1000 overlapcheck no all_in no vel constant 0. 0. 0. region reg volumefraction_region '+str(phi))
     
 
 def relax_insertion(dump_steps, Rp, lmp):
@@ -121,7 +137,9 @@ def thermal_expansion(r0, Ti, beta, grow_steps, lmp):
 	lmp.command('variable dexpand atom 2*${r0}*(1.+${beta}*(f_Temp-${T0}))')
 	lmp.command('fix grow all adapt ${growevery} atom diameter v_dexpand')    
 
-    
+def nuke_all_pebbles(Qp, lmp):
+    lmp.command('set group all property/atom heatSource '+str(Qp))
+
 
 
 def set_dumps(output_steps, output_directory, lmp):
@@ -159,9 +177,9 @@ def get_height(Rp):
     atomdata = numpy.loadtxt(last_dump_file, skiprows=9)
     return max(atomdata[:,5])+Rp
 
-def get_timestep(lmp):
-    timestep = lmp.extract_variable('step','null',0)
-    return timestep
+def get_dt(lmp):
+    dt = lmp.extract_variable('step','null',0)
+    return dt
 
 def get_phi(geometry, lmp):
     xlim = geometry[0]
@@ -213,14 +231,14 @@ def crushCheck(fCrushAve, fCrushMin, m, breakCheckInterval, numberOfChecks, rho,
 
 
         ----------------------------------------------------*'''
-        timestep = lmp.extract_variable('step','null',0)
+        dt = lmp.extract_variable('step','null',0)
         
         # Pull LIGGGHTS data from dumps. Formerly this was done with extract_x but
         # many oddities pushed me into just nabbing dumps.
-        fcDataString = 'post/dump.fc.'+str(np.int(timestep-1))+'.liggghts'
+        fcDataString = 'post/dump.fc.'+str(np.int(dt-1))+'.liggghts'
         forcedata = np.loadtxt(fcDataString, skiprows=5)   
         
-        atomDataString = 'post/dump_'+str(np.int(timestep-1))+'.liggghts'
+        atomDataString = 'post/dump_'+str(np.int(dt-1))+'.liggghts'
         atomdata = np.loadtxt(atomDataString, skiprows=9)
         
      

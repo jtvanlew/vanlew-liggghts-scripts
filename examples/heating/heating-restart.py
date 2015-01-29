@@ -1,4 +1,5 @@
-""" Filling a box with walls on the top and bottom and periodic boundaries in x and y
+""" Filling a box with walls on the sides (x-direction) and periodic y. The top is 'open' unless the user
+wants to also have a zwall.
 
 This simulation is an example of using the vl_dem module to create a clean input script file.
 
@@ -19,21 +20,20 @@ import      mpi4py
 import      sys, os
 from        lammps      import  lammps
 import      numpy       as      np
-from        vl_dem  	import  *
+from        vl_dem      import  *
 # invoke LAMMPS session
 lmp = lammps()
 
 
-
-
 #-----------------------------------------------------------------------------------------------------------
 # USER INPUT
-
+restart_file = 'filled_*.liggghts'
 # dt (s) and times for outputs or checks in simulation
-dt       		= 5.e-8		# s
-dump_time      		= 0.01 		# s
-CTE_check_time 		= 0.001 	# s
-screen_print_time 	= 0.001 	# s
+dt                  = 5.e-8     # s
+dump_time           = 0.01      # s
+CTE_check_time      = 0.001     # s
+heat_time           = 100.      # s
+screen_print_time   = 0.001     # s
 
 
 
@@ -46,37 +46,18 @@ Rp      = 0.0005      # m
 dp      = Rp*2
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# choose only one of the following and use the appropriate insertion scheme
-# N       = 10 		# desired number of pebbles in the system
-phi 	= 0.62		# desired packing fraction
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# If doing a gaussian distribution on radius, define the average and standard deviation
-mu      = Rp
-sigma   = Rp/15.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # geometry limits (these are per side for x and y, and total extent in z)
-xlim    = dp*7.5
-ylim    = dp*7.5
+xlim    = dp*10
+ylim    = dp*5
 zlim    = dp*25.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Coefficients of friction and restitution
 mu    = 0.2
 gamma = 0.1
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Heat transfer
@@ -91,12 +72,8 @@ Qp    = Q * (4./3 * 3.1415 * Rp**3)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # some programming variables that can be edited
 # manually specifiy processor decomposition of space if desired
-processor_layout = '4 2 1'
-
-min_energy  = 1.e-7
+# processor_layout = '4 2 1'
 #-----------------------------------------------------------------------------------------------------------
-
-
 
 #-----------------------------------------------------------------------------------------------------------
 # pile up geometric values into this list for putting into functions
@@ -105,32 +82,25 @@ geometry = [xlim, ylim, zlim, Rp]
 # create the directories for saving files
 output_dir  = 'post'
 restart_dir = 'restarts'
-post_dir    = output_dir+'/filling'
-mesh_dir    = post_dir+'/meshes'
+post_dir    = output_dir+'/heating'
 
 make_directory( output_dir, os  )
 make_directory( restart_dir, os )
 make_directory( post_dir, os    )
-make_directory( mesh_dir, os    )
+restart_path_name = restart_dir+'/'+restart_file
 #-----------------------------------------------------------------------------------------------------------
 
-
-
-
 #-----------------------------------------------------------------------------------------------------------
-# assign the dt and initialize the lammps commands for the filling script
+# assign the timestep and initialize the lammps commands for the filling script
 
 CTE_check_steps = int(CTE_check_time/dt)
-dump_steps     	= int(dump_time/dt)
-print_steps    	= int(screen_print_time/dt)
+dump_steps      = int(dump_time/dt)
+print_steps     = int(screen_print_time/dt)
+heat_steps      = int(heat_time/dt)
+define_timestep( dt, lmp)
 
-define_dt( dt, lmp)
-
-initialize_filling_liggghts( geometry, lmp)
+initialize_restart_liggghts(restart_path_name, Rp, lmp)
 #-----------------------------------------------------------------------------------------------------------
-
-
-
 
 #-----------------------------------------------------------------------------------------------------------
 # Specify material properties
@@ -148,16 +118,11 @@ dp.characteristic_velocity(lmp)
 thermal_expansion(Rp, Ti, beta, CTE_check_steps, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
-
-
-
 #-----------------------------------------------------------------------------------------------------------
 # Specify system geometries and create templates for the pebbles
-create_vertical_walls(zlim, lmp)
+create_horizontal_walls(xlim, lmp)
 define_phi_pebbles(geometry, dump_steps, rho, phi, lmp)
 #-----------------------------------------------------------------------------------------------------------
-
-
 
 #-----------------------------------------------------------------------------------------------------------
 # specify how frequently to dump and where to put the files. change screen display to normal custom version
@@ -165,30 +130,13 @@ custom_screen_output(print_steps, lmp)
 set_dumps(print_steps, post_dir, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
-
-
-
 #-----------------------------------------------------------------------------------------------------------
-# the pebbles are inserted with overlap allowed so to quickly fill to the desired void fraction. Now we 
-# limit their travel in each integration step and relax toward an equilibirum packing
-relax_insertion(dump_steps, Rp, lmp)
+nuke_all_pebbles(Qp, lmp)
+lmp.command('run '+str(heat_time))
 #-----------------------------------------------------------------------------------------------------------
 
 
 
-
 #-----------------------------------------------------------------------------------------------------------
-# the system is allowed to settle under normal verlet integration until the kinetic energy of the ensemble
-# is less than a specified value. 
-
-run_to_kinetic_steady_state(dump_steps, min_energy, lmp)
-#-----------------------------------------------------------------------------------------------------------
-
-
-
-
-#-----------------------------------------------------------------------------------------------------------
-# save to a restart file for heating or crushing or whatever
-lmp.command('write_restart '+restart_dir+'/filled_*.restart')
-#-----------------------------------------------------------------------------------------------------------
-
+# save to a restart file when finished
+lmp.command('write_restart '+restart_dir+'heated_*.restart')

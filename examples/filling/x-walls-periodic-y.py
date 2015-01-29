@@ -30,8 +30,8 @@ lmp = lammps()
 #-----------------------------------------------------------------------------------------------------------
 # USER INPUT
 
-# timestep (s) and times for outputs or checks in simulation
-timestep       		= 5.e-8		# s
+# dt (s) and times for outputs or checks in simulation
+dt       		= 5.e-8		# s
 dump_time      		= 0.01 		# s
 CTE_check_time 		= 0.001 	# s
 screen_print_time 	= 0.001 	# s
@@ -119,13 +119,13 @@ make_directory( mesh_dir, os    )
 
 
 #-----------------------------------------------------------------------------------------------------------
-# assign the timestep and initialize the lammps commands for the filling script
+# assign the dt and initialize the lammps commands for the filling script
 
-CTE_check_steps = int(CTE_check_time/timestep)
-dump_steps     	= int(dump_time/timestep)
-print_steps    	= int(screen_print_time/timestep)
+CTE_check_steps = int(CTE_check_time/dt)
+dump_steps     	= int(dump_time/dt)
+print_steps    	= int(screen_print_time/dt)
 
-define_timestep( timestep, lmp)
+define_dt( dt, lmp)
 
 initialize_filling_liggghts( geometry, lmp)
 #-----------------------------------------------------------------------------------------------------------
