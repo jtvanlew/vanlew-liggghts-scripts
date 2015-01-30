@@ -32,14 +32,14 @@ restart_file = 'filled_*.restart'
 dt                  = 1.e-4     # s
 dump_time           = 1.e0      # s
 CTE_check_time      = 1.e-1     # s
-heat_time           = 1.e3      # s
+heat_time           = 1.e4      # s
 screen_print_time   = 1.e-1     # s
 
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Mechanical 
-E       = 100e9       # Pa
+E       = 80.e9       # Pa
 nu      = 0.24
 rho     = 3440        # kg/m3
 Rp      = 0.0005      # m
@@ -63,7 +63,7 @@ gamma = 0.1
 # Heat transfer
 k     = 2.4         # W/m-K
 Cp    = 1.          # kJ/kg-K
-Ti    = 300         # K
+Ti    = 573         # K
 Twalls= 573
 beta  = 15.e-6
 Q     = 8.e6
@@ -100,7 +100,7 @@ print_steps     = int(screen_print_time/dt)
 heat_steps      = int(heat_time/dt)
 define_timestep( dt, lmp)
 
-initialize_restart_liggghts(restart_path_name, Rp, lmp)
+initialize_restart_liggghts(restart_path_name, geometry, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ set_dumps(dump_steps, post_dir, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------------------------
-
+# set_all_temp(Twalls, lmp)
 nuke_all_pebbles(Qp, lmp)
 hold_still(Rp, lmp)
 lmp.command('run '+str(heat_steps))
@@ -143,4 +143,4 @@ lmp.command('run '+str(heat_steps))
 
 #-----------------------------------------------------------------------------------------------------------
 # save to a restart file when finished
-lmp.command('write_restart '+restart_dir+'heated_*.restart')
+lmp.command('write_restart '+restart_dir+'/heated_*.restart')

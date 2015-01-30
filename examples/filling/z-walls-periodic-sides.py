@@ -30,7 +30,7 @@ lmp = lammps()
 # USER INPUT
 
 # dt (s) and times for outputs or checks in simulation
-dt       		= 5.e-8		# s
+dt       			= 5.e-8		# s
 dump_time      		= 0.01 		# s
 CTE_check_time 		= 0.001 	# s
 screen_print_time 	= 0.001 	# s
@@ -39,7 +39,7 @@ screen_print_time 	= 0.001 	# s
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Mechanical 
-E       = 100e9       # Pa
+E       = 80e9       # Pa
 nu      = 0.24
 rho     = 3440        # kg/m3
 Rp      = 0.0005      # m
@@ -50,14 +50,14 @@ dp      = Rp*2
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # choose only one of the following and use the appropriate insertion scheme
 # N       = 10 		# desired number of pebbles in the system
-phi 	= 0.62		# desired packing fraction
+phi 	= 0.64		# desired packing fraction
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # If doing a gaussian distribution on radius, define the average and standard deviation
-mu      = Rp
-sigma   = Rp/15.
+# mu      = Rp
+# sigma   = Rp/15.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -82,7 +82,7 @@ gamma = 0.1
 # Heat transfer
 k     = 2.4         # W/m-K
 Cp    = 1.          # kJ/kg-K
-Ti    = 300         # K
+Ti    = 573         # K
 beta  = 15.e-6
 Q     = 8.e6
 Qp    = Q * (4./3 * 3.1415 * Rp**3)
@@ -124,7 +124,7 @@ CTE_check_steps = int(CTE_check_time/dt)
 dump_steps     	= int(dump_time/dt)
 print_steps    	= int(screen_print_time/dt)
 
-define_dt( dt, lmp)
+define_timestep( dt, lmp)
 
 initialize_filling_liggghts( geometry, lmp)
 #-----------------------------------------------------------------------------------------------------------

@@ -24,43 +24,35 @@ from        vl_dem  	import  *
 # invoke LAMMPS session
 lmp = lammps()
 
-
-
-
 #-----------------------------------------------------------------------------------------------------------
 # USER INPUT
 
-# dt (s) and times for outputs or checks in simulation
-dt       		= 5.e-8		# s
+# timestep (s) and times for outputs or checks in simulation
+dt 			  		= 5.e-8		# s
 dump_time      		= 0.01 		# s
 CTE_check_time 		= 0.001 	# s
 screen_print_time 	= 0.001 	# s
 
-
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Mechanical 
-E       = 100e9       # Pa
+E       = 80.e9       # Pa
 nu      = 0.24
 rho     = 3440        # kg/m3
 Rp      = 0.0005      # m
 dp      = Rp*2
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # choose only one of the following and use the appropriate insertion scheme
 # N       = 10 		# desired number of pebbles in the system
-phi 	= 0.62		# desired packing fraction
+phi 	= 0.64		# desired packing fraction
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # If doing a gaussian distribution on radius, define the average and standard deviation
-mu      = Rp
-sigma   = Rp/15.
+# mu      = Rp
+# sigma   = Rp/15.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # geometry limits (these are per side for x and y, and total extent in z)
@@ -69,21 +61,17 @@ ylim    = dp*5
 zlim    = dp*25.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Coefficients of friction and restitution
 mu    = 0.2
 gamma = 0.1
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Heat transfer
 k     = 2.4         # W/m-K
 Cp    = 1.          # kJ/kg-K
-Ti    = 300         # K
+Ti    = 573         # K
 beta  = 15.e-6
 Q     = 8.e6
 Qp    = Q * (4./3 * 3.1415 * Rp**3)
@@ -92,12 +80,10 @@ Qp    = Q * (4./3 * 3.1415 * Rp**3)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # some programming variables that can be edited
 # manually specifiy processor decomposition of space if desired
-processor_layout = '4 2 1'
+# processor_layout = '4 2 1'
 
 min_energy  = 1.e-7
 #-----------------------------------------------------------------------------------------------------------
-
-
 
 #-----------------------------------------------------------------------------------------------------------
 # pile up geometric values into this list for putting into functions
@@ -115,23 +101,17 @@ make_directory( post_dir, os    )
 make_directory( mesh_dir, os    )
 #-----------------------------------------------------------------------------------------------------------
 
-
-
-
 #-----------------------------------------------------------------------------------------------------------
-# assign the dt and initialize the lammps commands for the filling script
+# assign the timestep and initialize the lammps commands for the filling script
 
 CTE_check_steps = int(CTE_check_time/dt)
 dump_steps     	= int(dump_time/dt)
 print_steps    	= int(screen_print_time/dt)
 
-define_dt( dt, lmp)
+define_timestep( dt, lmp)
 
 initialize_filling_liggghts( geometry, lmp)
 #-----------------------------------------------------------------------------------------------------------
-
-
-
 
 #-----------------------------------------------------------------------------------------------------------
 # Specify material properties
@@ -149,16 +129,12 @@ dp.characteristic_velocity(lmp)
 thermal_expansion(Rp, Ti, beta, CTE_check_steps, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
-
-
-
 #-----------------------------------------------------------------------------------------------------------
 # Specify system geometries and create templates for the pebbles
 create_horizontal_walls(xlim, lmp)
+create_vertical_walls(zlim, lmp)
 define_phi_pebbles(geometry, dump_steps, rho, phi, lmp)
 #-----------------------------------------------------------------------------------------------------------
-
-
 
 #-----------------------------------------------------------------------------------------------------------
 # specify how frequently to dump and where to put the files. change screen display to normal custom version
@@ -166,17 +142,11 @@ custom_screen_output(print_steps, lmp)
 set_dumps(dump_steps, post_dir, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
-
-
-
 #-----------------------------------------------------------------------------------------------------------
 # the pebbles are inserted with overlap allowed so to quickly fill to the desired void fraction. Now we 
 # limit their travel in each integration step and relax toward an equilibirum packing
 relax_insertion(dump_steps, Rp, lmp)
 #-----------------------------------------------------------------------------------------------------------
-
-
-
 
 #-----------------------------------------------------------------------------------------------------------
 # the system is allowed to settle under normal verlet integration until the kinetic energy of the ensemble
@@ -184,9 +154,6 @@ relax_insertion(dump_steps, Rp, lmp)
 
 run_to_kinetic_steady_state(dump_steps, min_energy, lmp)
 #-----------------------------------------------------------------------------------------------------------
-
-
-
 
 #-----------------------------------------------------------------------------------------------------------
 # save to a restart file for heating or crushing or whatever
