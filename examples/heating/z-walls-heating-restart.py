@@ -1,14 +1,13 @@
-""" Filling a box with walls on the sides (x-direction) and periodic y. The top is 'open' unless the user
-wants to also have a zwall.
+""" This file opens a restart from a previously run simulation of examples/filling/z-walls-periodic-sides.py
+We have walls in the z direction that are loaded from restart, deleted from the system, and replaced by walls
+that have a set temperature. it then runs for a long time (specified by heat_time) until thermal steady-state.
+
+You have to put this in the same directory as the script used for filling. It assumes the same directory structure
+when loading the restart and creating dump files.
 
 This simulation is an example of using the vl_dem module to create a clean input script file.
 
 We define properties in the 'USER INPUT' section. below that, you shouldn't need to edit anything.
-
-This script will fill a volume to the specified void fraction, run a relaxation (because we allow overlap)
-when filling to the void fraction, then allows the ensemble to settle based on the criteria of minimum
-necessary kinetic energy. Once the system's KE passes below the threshold defined by the user, a restart
-file is saved.
 
 Directories are created automatically for post data and restart files.
 
@@ -121,9 +120,9 @@ thermal_expansion(Rp, Ti, beta, CTE_check_steps, lmp)
 
 #-----------------------------------------------------------------------------------------------------------
 # Specify system geometries and create templates for the pebbles
-create_horizontal_walls(xlim, lmp)
-destroy_horizontal_walls(lmp)
-create_horizontal_walls_hot(xlim, Twalls, lmp)
+create_vertical_walls(zlim, lmp)
+destroy_filling_walls(lmp)
+create_vertical_walls_hot(zlim, Twalls, lmp)
 #-----------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------------------------

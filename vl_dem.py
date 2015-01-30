@@ -79,7 +79,7 @@ def create_horizontal_walls(xlim, lmp):
     lmp.command('fix xFill2 all wall/gran model hertz '\
                 'tangential history primitive type 1 xplane ' \
                 + str(xlim))
-def destroy_horizontal_walls(lmp):
+def destroy_filling_walls(lmp):
     lmp.command('unfix xFill1')
     lmp.command('unfix xFill2')
 
@@ -96,6 +96,14 @@ def create_vertical_walls(Z, lmp):
         'tangential history primitive type 1 zplane 0')
     lmp.command('fix xFill2 all wall/gran model hertz '\
         'tangential history primitive type 1 zplane ' + str(Z))
+
+def create_vertical_walls_hot(xlim, T, lmp):
+    lmp.command('fix z_hot_1 all wall/gran model hertz '\
+                'tangential history primitive type 1 zplane 0 \
+                temperature '+str(T))
+    lmp.command('fix z_hot_2 all wall/gran model hertz '\
+                'tangential history primitive type 1 zplane ' \
+                + str(xlim)+' temperature '+str(T))
 
 def define_gaussian_pebbles(rho, mu, sigma, N, lmp):
     lmp.command('fix pts1 all particletemplate/sphere 1 atom_type 1 density constant ' \
