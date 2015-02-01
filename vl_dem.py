@@ -62,6 +62,8 @@ def initialize_restart_liggghts(filename, geometry, lmp):
     lmp.command('newton off')
     lmp.command('communicate single vel yes')
     lmp.command('fix gravi all gravity 9.81 vector 0.0 0.0 -1.0')
+    lmp.command('fix integr all nve/sphere')
+
     
 
 
