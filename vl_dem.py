@@ -23,7 +23,7 @@ def make_directory(name, os):
     except:
         pass
 
-def initialize_filling_liggghts(geometry, lmp):
+def initialize_filling_z_liggghts(geometry, lmp):
     xlim = geometry[0]
     ylim = geometry[1]
     zlim = geometry[2]
@@ -32,6 +32,30 @@ def initialize_filling_liggghts(geometry, lmp):
     #lmp.command('processors '+processor_layout)
     lmp.command('atom_modify map array')
     lmp.command('boundary p p m')
+    lmp.command('newton off')
+    lmp.command('communicate single vel yes')
+    lmp.command('units si')
+    lmp.command('region reg block '+str(-xlim)+' '+str(xlim)+' '+str(-ylim)+' '\
+        +str(ylim)+' 0 '+str(zlim)+' units box')
+    lmp.command('create_box 1 reg')
+    lmp.command('neighbor '+str(2*Rp)+' bin')
+    lmp.command('neigh_modify delay 0')
+    lmp.command('echo both')
+    lmp.command('pair_style gran model hertz tangential history')
+    lmp.command('pair_coeff * *')
+    lmp.command('fix gravi all gravity 9.81 vector 0.0 0.0 -1.0')
+    lmp.command('variable energy equal ke')
+    lmp.command('variable volume equal vol')
+
+def initialize_filling_x_liggghts(geometry, lmp):
+    xlim = geometry[0]
+    ylim = geometry[1]
+    zlim = geometry[2]
+    Rp   = geometry[3]
+    lmp.command('atom_style granular')
+    #lmp.command('processors '+processor_layout)
+    lmp.command('atom_modify map array')
+    lmp.command('boundary m p p')
     lmp.command('newton off')
     lmp.command('communicate single vel yes')
     lmp.command('units si')
