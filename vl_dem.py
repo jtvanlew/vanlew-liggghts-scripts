@@ -274,7 +274,8 @@ def crush_pebbles(percent_to_crush, lmp):
 
     atom_temps = atomdata[:, 19]
     atom_radii = atomdata[:, 18]
-
+    id1  = forcedata[:, 6]
+    id2  = forcedata[:, 7]
     
     # concatenate into a single list
     id1 = id1.tolist()
