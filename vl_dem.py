@@ -252,9 +252,9 @@ def crush_pebbles(percent_to_crush, lmp):
     # many oddities pushed me into just nabbing dumps.
     import glob, os, numpy
     last_dump_file = str(max(glob.iglob('post/filling/dump_*.liggghts'), key=os.path.getctime))
-    last_contact_file = str(max(glob.iglob('post/filling/dump.fc._*.liggghts'), key=os.path.getctime))
+    last_contact_file = str(max(glob.iglob('post/filling/dump.fc.*.liggghts'), key=os.path.getctime))
     
-    forcedata = np.loadtxt(last_contact_file, skiprows=5)   
+    forcedata = np.loadtxt(last_contact_file, skiprows=9)   
     atomdata = np.loadtxt(last_dump_file, skiprows=9)
     
  
@@ -268,7 +268,7 @@ def crush_pebbles(percent_to_crush, lmp):
     number_to_crush = int(np.round(percent_to_crush * natoms,0))
     atoms_to_crush = np.zeros(number_to_crush)
     
-    for i in np.arange(0, pebbles_to_crush):
+    for i in np.arange(0, number_to_crush):
         atoms_to_crush[i] = random.choice(reduced_id_list)
         reduced_id_list.remove(atoms_to_crush[i])
 
