@@ -86,6 +86,8 @@ def initialize_restart_liggghts(filename, geometry, lmp):
     lmp.command('newton off')
     lmp.command('communicate single vel yes')
     lmp.command('fix gravi all gravity 9.81 vector 0.0 0.0 -1.0')
+    lmp.command('variable energy equal ke')
+    lmp.command('variable volume equal vol')
     lmp.command('fix integr all nve/sphere')
 
     
@@ -243,7 +245,7 @@ def hold_still(Rp, lmp):
 
 
 
-def crush_pebbles(percent_to_crush, lmp):
+def crush_pebbles_x(percent_to_crush, rho, Rp, lmp):
     import numpy as np
     
     natoms = lmp.get_natoms()
@@ -260,23 +262,44 @@ def crush_pebbles(percent_to_crush, lmp):
  
     # Atom temperature / radius data
     atomIDs   = list(atomdata[:, 0])
-
-    # pull out random IDs
-    reduced_id_list = atomIDs
-    import random
-
-    number_to_crush = int(np.round(percent_to_crush * natoms,0))
-    atoms_to_crush = np.zeros(number_to_crush)
-    
-    for i in np.arange(0, number_to_crush):
-        atoms_to_crush[i] = random.choice(reduced_id_list)
-        reduced_id_list.remove(atoms_to_crush[i])
-
     atom_temps = atomdata[:, 19]
     atom_radii = atomdata[:, 18]
     id1  = forcedata[:, 6]
     id2  = forcedata[:, 7]
+    x1  = forcedata[:, 0]
+    y1  = forcedata[:, 1]
+    z1  = forcedata[:, 2]
+    x2  = forcedata[:, 3]
+    y2  = forcedata[:, 4]
+    z2  = forcedata[:, 5]    
+
+
     
+    import random
+    reduced_id_list = list(atomIDs) # the list command makes a copy
+    number_to_crush = int(np.round(percent_to_crush * natoms,0))
+    atoms_to_crush = np.zeros(number_to_crush)
+
+    for i in np.arange(0, number_to_crush):
+        
+        # check if the pebble is periodic. right now i have a bug where the periodic pebble
+        # can not be replaced since some of the tiny pebbles will be completely outside of the system
+        # so, if periodic, take a new pebble.
+        periodic_flag = 1
+        while periodic_flag == 1:
+            atoms_to_crush[i] = random.choice(reduced_id_list)
+            index = atomIDs.index(atoms_to_crush[i])
+            periodic_flag = forcedata[index, 8]
+            if (atomdata[index,4] < -4.5e-3 or atomdata[index,4] > 4.5e-3):
+                periodic_flag = 1
+            print periodic_flag
+
+
+
+        reduced_id_list.remove(atoms_to_crush[i])
+
+
+
     # concatenate into a single list
     id1 = id1.tolist()
     id2 = id2.tolist()
@@ -294,7 +317,14 @@ def crush_pebbles(percent_to_crush, lmp):
     breakCount = 0
     
     for id in atoms_to_crush:
+        #id = int(id)
         # Pull out the temperature & radius of the atom under consideration
+        # print id
+        # for ids in atomIDs:
+        #     if np.abs(ids - id) < 3:
+        #         print ids
+        #         print atomIDs.index(ids)
+
         atomIndex = atomIDs.index(id)
         currentPebbleTemperature = atom_temps[atomIndex]
         Rp = atom_radii[atomIndex]
@@ -343,7 +373,142 @@ def crush_pebbles(percent_to_crush, lmp):
         lmp.command(regionTempString)
 
     # Send all IDs of pebbles that broke into a single group to delete them all at once
-    breakGroup = "breakGroup_"+str(iteration)
+    breakGroup = "delete_group"
+    breakGroupCommand = "group "+breakGroup+" id " + breakIDs
+    lmp.command(breakGroupCommand)
+    lmp.command("delete_atoms group " + breakGroup + ' compress no')
+
+
+
+def crush_pebbles_z(percent_to_crush, rho, Rp, lmp):
+    import numpy as np
+    
+    natoms = lmp.get_natoms()
+    
+    # Pull LIGGGHTS data from dumps. Formerly this was done with extract_x but
+    # many oddities pushed me into just nabbing dumps.
+    import glob, os, numpy
+    last_dump_file = str(max(glob.iglob('post/filling/dump_*.liggghts'), key=os.path.getctime))
+    last_contact_file = str(max(glob.iglob('post/filling/dump.fc.*.liggghts'), key=os.path.getctime))
+    
+    forcedata = np.loadtxt(last_contact_file, skiprows=9)   
+    atomdata = np.loadtxt(last_dump_file, skiprows=9)
+    
+ 
+    # Atom temperature / radius data
+    atomIDs   = list(atomdata[:, 0])
+    atom_temps = atomdata[:, 19]
+    atom_radii = atomdata[:, 18]
+    id1  = forcedata[:, 6]
+    id2  = forcedata[:, 7]
+    x1  = forcedata[:, 0]
+    y1  = forcedata[:, 1]
+    z1  = forcedata[:, 2]
+    x2  = forcedata[:, 3]
+    y2  = forcedata[:, 4]
+    z2  = forcedata[:, 5]    
+
+
+    
+    import random
+    reduced_id_list = list(atomIDs) # the list command makes a copy
+    number_to_crush = int(np.round(percent_to_crush * natoms,0))
+    atoms_to_crush = np.zeros(number_to_crush)
+
+    for i in np.arange(0, number_to_crush):
+        
+        # check if the pebble is periodic. right now i have a bug where the periodic pebble
+        # can not be replaced since some of the tiny pebbles will be completely outside of the system
+        # so, if periodic, take a new pebble.
+        periodic_flag = 1
+        while periodic_flag == 1:
+            atoms_to_crush[i] = random.choice(reduced_id_list)
+            index = atomIDs.index(atoms_to_crush[i])
+            periodic_flag = forcedata[index, 8]
+            if (atomdata[index,4] < -7e-3 or atomdata[index,4] > 7e-3 or atomdata[index,5] < -7e-3 or atomdata[index,5] > 7e-3):
+                periodic_flag = 1
+            print periodic_flag
+
+
+
+        reduced_id_list.remove(atoms_to_crush[i])
+
+
+
+    # concatenate into a single list
+    id1 = id1.tolist()
+    id2 = id2.tolist()
+    ids = []
+    ids = id1[:]
+    ids.extend(id2)
+    # convert to a set and back to remove duplicates, then sort
+    ids = list(set(ids))
+    ids.sort()
+    
+    # Loop over the IDs from fc, calculate normal forces between neighbors and compare 
+    # it to a Weibull distribution of forces (parameters defined above). If it gets
+    # flagged as broken, its ID gets added to a group for deletion
+    breakIDs = ""
+    breakCount = 0
+    
+    for id in atoms_to_crush:
+        #id = int(id)
+        # Pull out the temperature & radius of the atom under consideration
+        # print id
+        # for ids in atomIDs:
+        #     if np.abs(ids - id) < 3:
+        #         print ids
+        #         print atomIDs.index(ids)
+
+        atomIndex = atomIDs.index(id)
+        currentPebbleTemperature = atom_temps[atomIndex]
+        Rp = atom_radii[atomIndex]
+        
+        # Analyze the contact data of the atom under consideration
+        if id in id1:
+            index = id1.index(id)
+            xtemp,ytemp,ztemp = x1[index], y1[index], z1[index]
+        else:
+            index = id2.index(id)
+            xtemp,ytemp,ztemp = x2[index], y2[index], z2[index]
+
+        breakCount += 1
+        breakIDs += str(np.int(id))+" "
+        suffix = str(breakCount)
+        
+        # Code to insert broken fragments into region where the pebble was
+        # REGION
+        regionString = 'region brokenPebble' + suffix + ' sphere ' + \
+                str(xtemp) + ' ' + str(ytemp) + ' ' + str(ztemp) + ' ' + \
+                str(Rp) + ' units box'
+        
+        # PARTICLE DENSITY, SIZE DEFINITION
+        particleTemplateString = 'fix brokeSphereTemplateA' + suffix + \
+            ' all particletemplate/sphere 1 atom_type 1 density constant ' \
+            + str(rho) + " radius gaussian number " + str(Rp/5.) + ' ' \
+            + str(Rp/25.)
+        # PARTICLE DISTRIBUTION TEMPLATE
+        distributionTemplateString = 'fix bSTd' + suffix + \
+            ' all particledistribution/discrete ' + \
+            str(np.random.randint(1, 100000)) + '  1  brokeSphereTemplateA' + \
+            suffix + ' 1.0'
+        insertionString = 'fix bSTins' + suffix + '  all insert/pack seed '\
+             + str(np.random.randint(1, 100000)) + ' distributiontemplate bSTd' \
+             + suffix + ' vel constant 0. 0. 0. insert_every once ' + \
+             'overlapcheck yes all_in yes volumefraction_region 1.0 ' + \
+             'region brokenPebble' + suffix
+
+        regionTempString = 'set region brokenPebble' + suffix + \
+            ' property/atom Temp ' + str(currentPebbleTemperature)
+        
+        lmp.command(regionString)
+        lmp.command(particleTemplateString)
+        lmp.command(distributionTemplateString)
+        lmp.command(insertionString)
+        lmp.command(regionTempString)
+
+    # Send all IDs of pebbles that broke into a single group to delete them all at once
+    breakGroup = "delete_group"
     breakGroupCommand = "group "+breakGroup+" id " + breakIDs
     lmp.command(breakGroupCommand)
     lmp.command("delete_atoms group " + breakGroup + ' compress no')
