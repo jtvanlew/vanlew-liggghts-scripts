@@ -55,7 +55,7 @@ def initialize_filling_x_liggghts(geometry, lmp):
     lmp.command('atom_style granular')
     #lmp.command('processors '+processor_layout)
     lmp.command('atom_modify map array')
-    lmp.command('boundary m p p')
+    lmp.command('boundary m p m')
     lmp.command('newton off')
     lmp.command('communicate single vel yes')
     lmp.command('units si')
@@ -125,13 +125,13 @@ def create_vertical_walls(Z, lmp):
     lmp.command('fix xFill2 all wall/gran model hertz '\
         'tangential history primitive type 1 zplane ' + str(Z))
 
-def create_vertical_walls_hot(xlim, T, lmp):
+def create_vertical_walls_hot(Z, T, lmp):
     lmp.command('fix z_hot_1 all wall/gran model hertz '\
                 'tangential history primitive type 1 zplane 0 \
                 temperature '+str(T))
     lmp.command('fix z_hot_2 all wall/gran model hertz '\
                 'tangential history primitive type 1 zplane ' \
-                + str(xlim)+' temperature '+str(T))
+                + str(Z)+' temperature '+str(T))
 
 def define_gaussian_pebbles(rho, mu, sigma, N, lmp):
     lmp.command('fix pts1 all particletemplate/sphere 1 atom_type 1 density constant ' \
