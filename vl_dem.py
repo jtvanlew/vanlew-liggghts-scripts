@@ -31,7 +31,7 @@ def initialize_filling_z_liggghts(geometry, lmp):
     lmp.command('atom_style granular')
     #lmp.command('processors '+processor_layout)
     lmp.command('atom_modify map array')
-    lmp.command('boundary p p m')
+    lmp.command('boundary m p m')
     lmp.command('newton off')
     lmp.command('communicate single vel yes')
     lmp.command('units si')
